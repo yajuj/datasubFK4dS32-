@@ -1,26 +1,42 @@
-import 'antd/dist/antd.css';
 import {
-  Form,
-  Input,
   Button,
   Card,
-  Space,
-  Row,
   Col,
   Divider,
+  Form,
+  Input,
   Layout,
+  Row,
+  Space,
 } from 'antd';
-import { useState, useEffect } from 'react';
+import 'antd/dist/antd.css';
+import { useEffect, useState } from 'react';
 
 const App = () => {
   const [form] = Form.useForm();
   const [, forceUpdate] = useState({});
+  const [data, setData] = useState();
+  const [error, setError] = useState();
   useEffect(() => {
     forceUpdate({});
   }, []);
 
   const onFinish = values => {
-    console.log('Finish:', values);
+    const _values = { ...values, Amount: Number(values.Amount) };
+
+    fetch('http://localhost:5000/', {
+      method: 'POST',
+      body: JSON.stringify(_values),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(res => {
+        if (res.status >= 200 && res.status < 300) return res.json();
+        throw new Error();
+      })
+      .then(data => setData(data))
+      .catch(e => setError('Ошибка'));
   };
 
   return (
@@ -44,7 +60,7 @@ const App = () => {
             >
               <Form.Item
                 label='Card Number'
-                name='cardNumber'
+                name='CardNumber'
                 rules={[
                   { required: true, message: 'Поле не должно быть пустым' },
                   {
@@ -59,7 +75,7 @@ const App = () => {
               <Space>
                 <Form.Item
                   label='Expiration Date'
-                  name='expirationDate'
+                  name='ExpDate'
                   type='number'
                   rules={[
                     { required: true, message: 'Поле не должно быть пустым!' },
@@ -74,7 +90,7 @@ const App = () => {
 
                 <Form.Item
                   label='CVV'
-                  name='cvv'
+                  name='Cvv'
                   rules={[
                     { required: true, message: 'Поле не должно быть пустым!' },
                     {
@@ -89,12 +105,12 @@ const App = () => {
               <Divider />
               <Form.Item
                 label='Amount'
-                name='amount'
+                name='Amount'
                 rules={[
                   { required: true, message: 'Поле не должно быть пустым!' },
                 ]}
               >
-                <Input />
+                <Input type='number' />
               </Form.Item>
               <Form.Item shouldUpdate>
                 {() => (
@@ -113,6 +129,10 @@ const App = () => {
                 )}
               </Form.Item>
             </Form>
+            {error && <p>{error}</p>}
+            {data && (
+              <p>{`RequestId:${data.RequestId}, Amount:${data.Amount}`}</p>
+            )}
           </Card>
         </Col>
       </Row>
